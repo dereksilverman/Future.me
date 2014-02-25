@@ -25,7 +25,5 @@ class Company < ActiveRecord::Base
     self.people.uniq.size
   end
 
-
-
 end
 

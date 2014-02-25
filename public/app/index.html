@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+ <!-- add the ng-app *attribute* 
+      ng-app points to the ngApp *directive* -->
+<html lang="en" ng-app="futureMeApp">
+  <head>
+    <meta charset="utf-8"/>
+    <title>Project Path</title>
+    <link href="app/foundation/css/foundation.min.css" rel="stylesheet"/>
+    <link href="app/foundation/css/normalize.css" rel="stylesheet"/>
+    <link href="app/css/app.css" rel="stylesheet"/>
+    <script src="app/lib/angular/angular.min.js"></script>
+    <script src="app/lib/angular/angular-route.min.js"></script>
+    <script src="app/lib/angular/angular-resource.min.js"></script>
+    <script src="app/js/app.js"></script>
+    <script src="app/js/controllers.js"></script>
+    <script src="app/js/filters.js"></script>
+    <script src="app/js/services.js"></script>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script type="text/javascript" src="../d3test.js"></script>
+    <stylesheet type="text/javascript" src="../d3style.css"></script>
+  </head>
+  <!-- set your controller here
+      this allows us to bind our model 
+      and our view
+
+      this will be defined in js/controllers.js -->
+  <body>
+    <div ng-view></div>
+  </body>
+</html>

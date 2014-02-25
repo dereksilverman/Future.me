@@ -1,11 +1,7 @@
 // Place all the styles related to the Pages controller here.
 // They will automatically be included in application.css.
 // You can use Sass (SCSS) here: http://sass-lang.com/
-.chart rect {
-  fill: teal;
-}
-.chart text {
-  fill: white;
-  font: 10px sans-serif;
-  text-anchor: end;
+
+text {
+  font-size:10px;
 }

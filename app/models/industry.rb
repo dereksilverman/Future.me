@@ -6,8 +6,12 @@ class Industry < ActiveRecord::Base
   has_many :company_industries
   has_many :companies, :through => :company_industries
 
- def value
+  def value
   	self.companies.uniq.size
+  end
+
+  def source
+    "industries/#{self.id}/companies"
   end
  
 end

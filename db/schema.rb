@@ -11,11 +11,11 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20140210154550) do
+ActiveRecord::Schema.define(:version => 20140206164239) do
 
   create_table "companies", :force => true do |t|
     t.string   "name"
-    t.integer  "linkedin_id"
+    t.string   "linkedin_id"
     t.string   "url"
     t.string   "address"
     t.string   "display"

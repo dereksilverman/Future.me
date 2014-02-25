@@ -1,14 +1,16 @@
 class PagesController < ApplicationController
 
   def index
+    render 'public/app/index.html'
     # Populate.new
-    @companies = Company.all
-    @people = Person.all
-    @educations = Education.all
-    @schools = School.all
-    @industries = Industry.all
-    @locations = Location.all
+    # @companies = Company.all
+    # @people = Person.all
+    # @educations = Education.all
+    # @schools = School.all
+    # @industries = Industry.all
+    # @locations = Location.all
   end
+
 
 
   def d3test

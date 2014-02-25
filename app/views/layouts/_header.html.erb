@@ -1,8 +1,21 @@
-<% if user_signed_in? %>
-  <%= link_to "Sign Out", destroy_user_session_path, :method => :delete %> |
-  <%= link_to "Connect your LinkedIn", user_omniauth_authorize_path(:linkedin) %> 
-<% else %>
-  <%= link_to "Sign In", new_user_session_path %> |
-  <%#= link_to "Sign Up", new_user_registration_path %>
-  <%= link_to "Sign In w/ LinkedIn", user_omniauth_authorize_path(:linkedin) %>
-<% end %>
+<nav class="top-bar" data-topbar>
+  <ul class="title-area">
+    <li class="name">
+      <h1><a href="#">Project Path</a></h1>
+    </li>
+    <li class="toggle-topbar menu-icon"><a href="#">Menu</a></li>
+  </ul>
+
+  <section class="top-bar-section">
+    <!-- Right Nav Section -->
+    <ul class="right">
+      <% if user_signed_in? %>
+        <li class="active"><%= link_to "Sign Out", destroy_user_session_path, :method => :delete %> </li>
+        <!-- <li><%#= link_to "Connect your LinkedIn", user_omniauth_authorize_path(:linkedin) %> </li> -->
+      <% else %>
+        <!-- <li><%#= link_to "Sign In", new_user_session_path %> </li> -->
+        <li><%= link_to "Sign In w/ LinkedIn", user_omniauth_authorize_path(:linkedin) %></li>
+      <% end %>      
+    </ul>
+  </section>
+</nav>

@@ -7,6 +7,6 @@ class DropCompaniesCreateCompanies < ActiveRecord::Migration
       t.string   :address
       t.string   :display
       t.timestamps
-  end
+    end
   end
 end
