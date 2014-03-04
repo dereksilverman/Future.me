@@ -16,9 +16,12 @@ class User < ActiveRecord::Base
       user.provider = auth.provider
       user.uid = auth.uid
       user.email = auth.info.email
-      HardWorker.perform_async(user, auth)
+      user.create_people(auth) # creates other people plus user's @@connections
+      user.create_person(auth, user) # calls the method to store data and passes params
  	  end
   end
+
+
 
   def new_with_session(params, session)
   	if session["devise.user_attributes"]
@@ -44,7 +47,7 @@ class User < ActiveRecord::Base
   # create person object for the user
   def create_person(auth, user)
      # connections are lots of people objects!
-    person = Person.find_or_create_by_firstname_and_lastname_and_linkedin_id_and_linkedin_url(
+    person = Person.delay.find_or_create_by_firstname_and_lastname_and_linkedin_id_and_linkedin_url(
         auth.info.first_name, auth.info.last_name, user.uid, auth.info.urls["public_profile"]) 
     # Call other two methods and pass person as param
     user_companies(person, auth, user)
@@ -55,10 +58,10 @@ class User < ActiveRecord::Base
   def create_people(auth)
     @@connections = auth.extra["raw_info"]["connections"]["values"].map do |person_hash|
       if person_hash.siteStandardProfileRequest
-        new_person = Person.find_or_create_by_firstname_and_lastname_and_linkedin_id_and_linkedin_url(
+        new_person = Person.delay.find_or_create_by_firstname_and_lastname_and_linkedin_id_and_linkedin_url(
           person_hash.firstName, person_hash.lastName, person_hash.id, person_hash.siteStandardProfileRequest.url)
       else
-        new_person = Person.find_or_create_by_firstname_and_lastname_and_linkedin_id(
+        new_person = Person.delay.find_or_create_by_firstname_and_lastname_and_linkedin_id(
           person_hash.firstName, person_hash.lastName, person_hash.id)
       end
     end
@@ -68,6 +71,7 @@ class User < ActiveRecord::Base
     if @@connections
       @@connections.each do |person|
         people << person unless people.include? person
+
       end
     end
   end
@@ -78,9 +82,9 @@ class User < ActiveRecord::Base
 
       positions_array.each do |position_hash|
         # Create companies
-        company = Company.find_or_create_by_name_and_linkedin_id(position_hash.company.name, 
+        company = Company.delay.find_or_create_by_name_and_linkedin_id(position_hash.company.name, 
           position_hash.company.id)
-        industry = Industry.find_or_create_by_name(position_hash.company.industry)
+        industry = Industry.delay.find_or_create_by_name(position_hash.company.industry)
 
         # Get company location from the API
         company_location(company)        
@@ -99,7 +103,7 @@ class User < ActiveRecord::Base
 
 
         # Create jobtitle
-        jobtitle = Jobtitle.find_or_create_by_title_and_start_date_and_end_date_and_company_id(position_hash.title, 
+        jobtitle = Jobtitle.delay.find_or_create_by_title_and_start_date_and_end_date_and_company_id(position_hash.title, 
           startDate, endDate, company.id)
         
         # Make associations
@@ -119,7 +123,7 @@ class User < ActiveRecord::Base
     api.company_id = company.linkedin_id  
     api.company_details
     api.company_postalcode
-    location = Location.find_or_create_by_postalcode(api.company_postalcode)
+    location = Location.delay.find_or_create_by_postalcode(api.company_postalcode)
     company.locations << location
   end
 
@@ -127,13 +131,13 @@ class User < ActiveRecord::Base
     edu_array = auth.extra["raw_info"].educations.values[1]
     edu_array.each do |edu_hash|
       # Create school
-      school = School.find_or_create_by_name(edu_hash.schoolName)
+      school = School.delay.find_or_create_by_name(edu_hash.schoolName)
       person.schools << school
       
       # Create education
       grad_yr = edu_hash.endDate.year if edu_hash.endDate
       
-      education = Education.find_or_create_by_kind_and_major_and_grad_yr_and_school_id(
+      education = Education.delay.find_or_create_by_kind_and_major_and_grad_yr_and_school_id(
           edu_hash.degree, edu_hash.fieldOfStudy, grad_yr, school.id)
       person.educations << education  
       person.save    
@@ -145,19 +149,19 @@ class User < ActiveRecord::Base
   def add_connection_details(user)
     @@connections.each do |person|
       # this takes a long time
-      public_profile_url = Api.new.get_public_profile_url(person.linkedin_id) # need this bc oauth gives a diff url
+      public_profile_url = Api.new.delay.get_public_profile_url(person.linkedin_id) # need this bc oauth gives a diff url
       @scrape = Scraper.new(public_profile_url)
       if @scrape.profile
         @scrape.educations.each do |school|
-          this_school = School.find_or_create_by_name(school[:name])
+          this_school = School.delay.find_or_create_by_name(school[:name])
           person.schools << this_school
           # regex out the kind and major
           match = (/([^,]*),? ?(.*)/).match(school[:description])
           if match
-            education = Education.find_or_create_by_kind_and_major_and_grad_yr_and_school_id(
+            education = Education.delay.find_or_create_by_kind_and_major_and_grad_yr_and_school_id(
               match[1], match[2], school[:period], this_school.id)
           else
-            education = Education.find_or_create_by_kind_and_grad_yr_and_school_id(
+            education = Education.delay.find_or_create_by_kind_and_grad_yr_and_school_id(
               school[:description], school[:period], this_school.id)
           end
           person.educations << education unless person.educations.include? education
@@ -166,14 +170,14 @@ class User < ActiveRecord::Base
         end
 
         @scrape.current_companies.each do |company|
-          this_company = Company.find_or_create_by_name_and_url_and_address(
+          this_company = Company.delay.find_or_create_by_name_and_url_and_address(
             company[:company], company[:website], company[:address])
           person.companies << this_company unless person.companies.include? this_company
 
           if this_company.address
             matchdata = this_company.address.match(/\d{5}/)
             if matchdata
-              this_location = Location.find_or_create_by_postalcode(matchdata[0].to_i)
+              this_location = Location.delay.find_or_create_by_postalcode(matchdata[0].to_i)
               # self.city_state_lon_lat
               this_company.locations << this_location unless this_company.locations.include? this_location
 
@@ -181,13 +185,13 @@ class User < ActiveRecord::Base
             end
           end
 
-          this_industry = Industry.find_or_create_by_name(company[:industry])
+          this_industry = Industry.delay.find_or_create_by_name(company[:industry])
           if this_company.industries
             this_company.industries << this_industry unless this_company.industries.include? this_industry
             # this_company.save
           end
 
-          jobtitle = Jobtitle.find_or_create_by_title_and_start_date_and_end_date_and_company_id(
+          jobtitle = Jobtitle.delay.find_or_create_by_title_and_start_date_and_end_date_and_company_id(
             company[:title], company[:start_date], company[:end_date], this_company.id)
           person.jobtitles << jobtitle unless person.jobtitles.include? jobtitle
           # Save this after shoveling
@@ -195,9 +199,9 @@ class User < ActiveRecord::Base
         end
 
         @scrape.past_companies.each do |company|
-          # this_company = Company.find_or_create_by_name_and_url_and_address(
+          # this_company = Companydelay.find_or_create_by_name_and_url_and_address(
           #   company[:company], company[:website], company[:address])
-          this_company = Company.find_or_create_by_name(
+          this_company = Company.delay.find_or_create_by_name(
             company[:company])
           if this_company.url.nil?
             this_company.update_attributes(:url=>company[:website],:address=>company[:address])
@@ -208,7 +212,7 @@ class User < ActiveRecord::Base
             matchdata = this_company.address.match(/\d{5}/)
 
             if matchdata 
-              this_location = Location.find_or_create_by_postalcode(matchdata[0].to_i)
+              this_location = Location.delay.find_or_create_by_postalcode(matchdata[0].to_i)
               # self.city_state_lon_lat
               this_company.locations << this_location unless this_company.locations.include? this_location
 
@@ -217,13 +221,13 @@ class User < ActiveRecord::Base
             end
           end
 
-          this_industry = Industry.find_or_create_by_name(company[:industry])
+          this_industry = Industry.delay.find_or_create_by_name(company[:industry])
           if this_company.industries
             this_company.industries << this_industry unless this_company.industries.include? this_industry
             # this_company.save
           end
 
-          jobtitle = Jobtitle.find_or_create_by_title_and_start_date_and_end_date_and_company_id(
+          jobtitle = Jobtitle.delay.find_or_create_by_title_and_start_date_and_end_date_and_company_id(
             company[:title], company[:start_date], company[:end_date], this_company.id)
           person.jobtitles << jobtitle unless person.jobtitles.include? jobtitle
           # Save this after shoveling
