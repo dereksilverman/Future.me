@@ -1,7 +1,7 @@
 class OmniauthCallbacksController < Devise::OmniauthCallbacksController
 
 	def linkedin
-		user = User.delay.from_omniauth(request.env["omniauth.auth"])
+		user = User.from_omniauth(request.env["omniauth.auth"])
 		if user.persisted?
 			flash.notice = "Signed in w/ LinkedIn"
 			sign_in_and_redirect "#/view"

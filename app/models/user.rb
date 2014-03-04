@@ -71,9 +71,9 @@ class User < ActiveRecord::Base
     if @@connections
       @@connections.each do |person|
         people << person unless people.include? person
-
       end
     end
+    add_connection_details
   end
 
   def user_companies(person, auth, user)
@@ -146,7 +146,7 @@ class User < ActiveRecord::Base
 
   # this is where things slowwwww dowwwwwwwwnnnn
   # somewhere in here the absolute URL needed (not nil) is called
-  def add_connection_details(user)
+  def add_connection_details
     @@connections.each do |person|
       # this takes a long time
       public_profile_url = Api.new.delay.get_public_profile_url(person.linkedin_id) # need this bc oauth gives a diff url
