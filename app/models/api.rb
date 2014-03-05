@@ -21,7 +21,9 @@ class Api
   def company_details
     json_txt = ACCESS_TOKEN.get("http://api.linkedin.com/v1/companies/#{@company_id}:(name,industries,company-type,locations,employee-count-range)", 'x-li-format' => 'json').body
     parsed = JSON.parse(json_txt)
-    @company_industry = parsed["industries"]["values"][0]["name"]
+    if parsed["industries"]
+      @company_industry = parsed["industries"]["values"][0]["name"]
+    end
     if parsed["locations"]
       @company_postalcode = parsed["locations"]["values"][0]["address"]["postalCode"]
     end
@@ -46,6 +48,12 @@ class Api
       int += 25
     end
     @people.uniq!
+  end
+
+  def get_public_profile_url(linkedin_id)
+    json_txt = ACCESS_TOKEN.get("https://api.linkedin.com/v1/people/id=#{linkedin_id}:(public-profile-url)", 'x-li-format' => 'json').body
+    parsed = JSON.parse(json_txt)
+    return parsed["publicProfileUrl"]
   end
 
 
@@ -75,4 +83,3 @@ class Api
   #   Person.create(:firstname => firstname, :lastname => lastname, :linkedin_id => linkedin_id)
   # end
 end 
-
